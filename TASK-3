@@ -1,0 +1,78 @@
+import pandas as pd
+import folium
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# 1. Load Restaurant Data
+df = pd.read_excel('/content/Restaurant.xlsx')
+
+# 2. Inspect and Prepare Data
+# df.info() # Uncomment to see data types and non-null counts
+# df[['Latitude', 'Longitude', 'Aggregate rating']].describe() # Uncomment to see descriptive statistics
+# df.isnull().sum() # Uncomment to see missing values
+
+# Map country codes to country names
+country_codes = {
+    1: 'India',
+    14: 'Australia',
+    30: 'Brazil',
+    37: 'Canada',
+    94: 'Indonesia',
+    148: 'New Zealand',
+    162: 'Philippines',
+    166: 'Qatar',
+    184: 'Singapore',
+    189: 'South Africa',
+    191: 'Sri Lanka',
+    208: 'Turkey',
+    214: 'UAE',
+    215: 'United Kingdom',
+    216: 'United States'
+}
+df['Country'] = df['Country Code'].map(country_codes)
+
+# 3. Visualize Restaurant Locations on a map
+mean_lat = df['Latitude'].mean()
+mean_lon = df['Longitude'].mean()
+
+m = folium.Map(location=[mean_lat, mean_lon], zoom_start=2)
+
+for index, row in df.iterrows():
+    if pd.notnull(row['Latitude']) and pd.notnull(row['Longitude']):
+        popup_content = f"<b>Restaurant Name:</b> {row['Restaurant Name']}<br>"
+        popup_content += f"<b>City:</b> {row['City']}<br>"
+        popup_content += f"<b>Aggregate Rating:</b> {row['Aggregate rating']}"
+        folium.Marker(
+            location=[row['Latitude'], row['Longitude']],
+            popup=popup_content
+        ).add_to(m)
+
+display(m)
+print("Interactive map generated successfully.")
+
+# 4. Analyze Restaurant Distribution by Country
+restaurants_per_country = df['Country'].value_counts()
+
+plt.figure(figsize=(12, 6))
+sns.barplot(x=restaurants_per_country.index, y=restaurants_per_country.values)
+plt.title('Restaurant Distribution by Country')
+plt.xlabel('Country')
+plt.ylabel('Number of Restaurants')
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+print("Bar plot of restaurant distribution by country generated successfully.")
+
+# 5. Correlate Location with Rating
+avg_ratings_per_country = df.groupby('Country')['Aggregate rating'].mean()
+avg_ratings_per_country_sorted = avg_ratings_per_country.sort_values(ascending=False)
+
+plt.figure(figsize=(14, 7))
+sns.barplot(x=avg_ratings_per_country_sorted.index, y=avg_ratings_per_country_sorted.values, hue=avg_ratings_per_country_sorted.index, palette='viridis', legend=False)
+plt.title('Average Restaurant Rating by Country')
+plt.xlabel('Country')
+plt.ylabel('Average Rating')
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+print("Bar chart of average restaurant ratings by country generated successfully.")
